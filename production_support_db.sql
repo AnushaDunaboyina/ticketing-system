@@ -108,9 +108,11 @@ CREATE TABLE `tickets` (
   `priority` varchar(50) DEFAULT 'MEDIUM',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `asigned_to` int DEFAULT NULL,
+  `assigned_to` int DEFAULT NULL,
   `created_by` int DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (assigned_to) REFERENCES users(id),
+  FOREIGN KEY (created_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
