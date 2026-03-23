@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, abort
-from controllers import user_controller as uc
-from controllers import ticket_controller as tc
+from Controller import user_controller as uc
+from Controller import ticket_controller as tc
 
 app = Flask(__name__)
 
