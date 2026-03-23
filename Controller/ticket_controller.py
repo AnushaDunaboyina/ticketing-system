@@ -1,4 +1,4 @@
-from models.ticket import Ticket
+from Models.ticket import Ticket
 
 tickets = []
 

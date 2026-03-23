@@ -1,4 +1,4 @@
-from models.user import User
+from Models.user import User
 
 users = []
 
