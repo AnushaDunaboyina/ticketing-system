@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api";
-
-const PRIORITY_MAP = { Low: 1, Medium: 2, High: 3 };
-const STATUS_MAP = { Open: 1, "In Progress": 2, Resolved: 3 };
+import { PRIORITY_MAP, STATUS_MAP } from "../utils";
 
 export default function TicketDetails() {
   const { id } = useParams();
@@ -22,13 +20,7 @@ export default function TicketDetails() {
           API.get("/users"),
         ]);
 
-        const t = ticketRes.data;
-
-        setTicket({
-          ...t,
-          priority: PRIORITY_MAP[t.priority],
-          status: STATUS_MAP[t.status],
-        });
+        setTicket(ticketRes.data);
         setUsers(usersRes.data);
       } catch (err) {
         console.error("Error loading ticket:", err);
@@ -83,11 +75,11 @@ export default function TicketDetails() {
 
         <div className="row">
           <div className="col-md-6 mb-3">
-            <strong>Priority:</strong> {PRIORITY_LABELS[ticket.priority]}
+            <strong>Priority:</strong> {PRIORITY_MAP[ticket.priority]}
           </div>
 
           <div className="col-md-6 mb-3">
-            <strong>Status:</strong> {STATUS_LABELS[ticket.status]}
+            <strong>Status:</strong> {STATUS_MAP[ticket.status]}
           </div>
 
           <div className="col-md-6 mb-3">

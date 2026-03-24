@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../api";
 import "../styles/TicketList.css";
 import { useNavigate } from "react-router-dom";
-import API from "../api";
-
+import { PRIORITY_MAP, STATUS_MAP, PRIORITY_OPTIONS, STATUS_OPTIONS } from "../utils";
 
 const TicketList = () => {
 
@@ -20,66 +19,19 @@ const TicketList = () => {
   const [sortKey, setSortKey] = useState(null);
   const [sortOrder, setSortOrder] = useState("desc"); // desc = newest first
   
+  async function fetchTickets() {
+    try {
+      const response = await API.get("/tickets");
+      setTickets(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error("Error fetching tickets:", error);
+      setTickets([]);
+    }
+  }
 
   useEffect(() => {
     fetchTickets();
   }, []);
-
-  //Fetch all tickets from backend
-  const fetchTickets = async () => {
-    try {
-      const response = await API.get("/tickets");
-      setTickets(response.data);
-      console.log("One ticket:", response.data[0]);
-    } catch (error) {
-      console.error("Error fetching tickets:", error);
-      setTickets([
-      {
-        id: 1,
-        title: "Login issue",
-        description: "User cannot log in",
-        priority: "High",
-        status: "Open",
-        assignee: "Anusha",
-        reporter: "Sarah",
-        created_at: "2024-01-10T10:20:00Z"
-      },
-      {
-        id: 2,
-        title: "UI bug",
-        description: "Button misaligned",
-        priority: "Low",
-        status: "Closed",
-        assignee: "Gregory",
-        reporter: "John",
-        created_at: "2024-01-10T10:30:00Z"
-
-      },
-      {
-        id: 3,
-        title: "Payment failure",
-        description: "Payment gateway returns 500 error",
-        priority: "Medium",
-        status: "In Progress",
-        assignee: "Joshua",
-        reporter: "Micheal",
-        created_at: "2024-01-11T14:20:00Z"
-      },
-      {
-        id: 4,
-        title: "Login failure",
-        description: "Authentication error 404",
-        priority: "Medium",
-        status: "Open",
-        assignee: "Neil",
-        reporter: "James",
-        created_at: "2024-01-12T09:15:00Z"
-      }
-      
-    ]);
-
-    }
-  };
 
   // GLOBAL CLEAR FILTERS BUTTON
   const clearAllFilters = () => {
@@ -105,10 +57,10 @@ const TicketList = () => {
 
     const matchesSearch =
       ticket.id.toString().includes(q) || // search by ID
-      ticket.title.toLowerCase().includes(q) || // search by title
-      ticket.description.toLowerCase().includes(q) || // search by description
-      ticket.assignee.toString.toLowerCase().includes(q) || // search by assignee
-      ticket.reporter.toString.toLowerCase().includes(q); // search by reporter
+      (ticket.title || "").toLowerCase().includes(q) || // search by title
+      (ticket.description || "").toLowerCase().includes(q) || // search by description
+      (ticket.assignee && ticket.assignee.toString().toLowerCase().includes(q)) || // search by assignee
+      (ticket.reporter && ticket.reporter.toString().toLowerCase().includes(q)); // search by reporter
 
     if (!matchesSearch) return false;
 
@@ -182,28 +134,25 @@ const TicketList = () => {
                 </span>
 
                 <ul className="dropdown-menu">
+                  {PRIORITY_OPTIONS.map((option) => (
+                    <li key={option.value}>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => setPriorityFilter(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    </li>
+                  ))}
                   <li>
-                    <button
-                      className="dropdown-item"
-                      onClick={() => setPriorityFilter("Low")}
-                    >
-                      Low
-                    </button>
+                    <hr className="dropdown-divider" />
                   </li>
                   <li>
                     <button
                       className="dropdown-item"
-                      onClick={() => setPriorityFilter("Medium")}
+                      onClick={() => setPriorityFilter(null)}
                     >
-                      Medium
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      className="dropdown-item"
-                      onClick={() => setPriorityFilter("High")}
-                    >
-                      High
+                      All Priorities
                     </button>
                   </li>
                 </ul>
@@ -221,28 +170,25 @@ const TicketList = () => {
                 </span>
 
                 <ul className="dropdown-menu">
+                  {STATUS_OPTIONS.map((option) => (
+                    <li key={option.value}>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => setStatusFilter(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    </li>
+                  ))}
                   <li>
-                    <button
-                      className="dropdown-item"
-                      onClick={() => setStatusFilter("Open")}
-                    >
-                      Open
-                    </button>
+                    <hr className="dropdown-divider" />
                   </li>
                   <li>
                     <button
                       className="dropdown-item"
-                      onClick={() => setStatusFilter("In Progress")}
+                      onClick={() => setStatusFilter(null)}
                     >
-                      In Progress
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      className="dropdown-item"
-                      onClick={() => setStatusFilter("Resolved")}
-                    >
-                      Resolved
+                      All Statuses
                     </button>
                   </li>
                 </ul>
@@ -306,26 +252,19 @@ const TicketList = () => {
               <td>{ticket.title}</td>
               <td><span
                   className={
-                    ticket.priority === "High"
+                    ticket.priority === 3
                       ? "priority-high"
-                      : ticket.priority === "Medium"
+                      : ticket.priority === 2
                       ? "priority-medium"
                       : "priority-low"
                   }
                 >
-                  {ticket.priority}
+                  {PRIORITY_MAP[ticket.priority] || "Unknown"}
                 </span>
               </td>
-              <td>{ticket.status}</td>
-              <td
-                style={{ cursor: "pointer", color: "blue" }}
-                onClick={(e) => {
-                  e.stopPropagation(); // prevent row click
-                  navigate(`/users/${ticket.assignee}`);
-                }}
-              >
-                {ticket.assignee}
-              </td>              <td>{ticket.reporter}</td>
+              <td>{STATUS_MAP[ticket.status] || "Unknown"}</td>
+              <td>{ticket.assignee}</td>
+              <td>{ticket.reporter}</td>
               <td>{new Date(ticket.created_at).toLocaleString()}</td>
               <td>{ticket.description}</td>
             </tr>

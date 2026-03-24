@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import API from "../api";
-
+import { STATUS_MAP, PRIORITY_MAP } from "../utils";
 
 // Chart.js imports
 import { Pie, Bar } from "react-chartjs-2";
@@ -30,28 +29,19 @@ const Dashboard = () => {
   const [tickets, setTickets] = useState([]);
   const [myTickets, setMyTickets] = useState([]);
   const [activity, setActivity] = useState([]);
+  const [last7DaysData, setLast7DaysData] = useState([]);
 
-  // Simulated logged-in user (replace with real auth later)
-  const loggedInUser = "Vikas";
-
-  useEffect(() => {
-    fetchTickets();
-  }, []);
-
-  const fetchTickets = async () => {
+  async function fetchTickets() {
     try {
-      const res = API.get("/tickets");
-      const allTickets = res.data;
+      const res = await API.get("/tickets");
+      const allTickets = Array.isArray(res.data) ? res.data : [];
 
       setTickets(allTickets);
 
-      // Tickets assigned to logged-in user
-      const mine = allTickets.filter(
-        (t) => t.assignee?.toLowerCase() === loggedInUser.toLowerCase()
-      );
-      setMyTickets(mine);
+      // Tickets assigned to logged-in user (placeholder - assignee is numeric ID)
+      // TODO: Implement real user authentication
+      setMyTickets([]);
 
-      // Recent activity feed
       const activityFeed = allTickets
         .map((t) => ({
           id: t.id,
@@ -65,52 +55,57 @@ const Dashboard = () => {
       setActivity(activityFeed);
     } catch (err) {
       console.error("Error fetching tickets:", err);
+      setTickets([]);
+      setActivity([]);
     }
-  };
+  }
+
+  function calculateLast7Days() {
+    const today = new Date();
+    const daysArray = [];
+
+    // Create an array for the last 7 days.
+    for (let i = 6; i >= 0; i -= 1) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      daysArray.push({
+        date: d.toISOString().split("T")[0],
+        count: 0,
+      });
+    }
+
+    tickets.forEach((ticket) => {
+      const createdDate = ticket.created_at?.split("T")[0];
+      const day = daysArray.find((d) => d.date === createdDate);
+      if (day) {
+        day.count += 1;
+      }
+    });
+
+    setLast7DaysData(daysArray);
+  }
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
 
   // KPI Calculations
   const total = tickets.length;
-  const open = tickets.filter((t) => t.status === "Open").length;
-  const inProgress = tickets.filter((t) => t.status === "In Progress").length;
-  const closed = tickets.filter((t) => t.status === "Closed").length;
+  const open = tickets.filter((t) => t.status === 1).length; // status 1 = Open
+  const inProgress = tickets.filter((t) => t.status === 2).length; // status 2 = In Progress
+  const resolved = tickets.filter((t) => t.status === 3).length; // status 3 = Resolved
 
-  const high = tickets.filter((t) => t.priority === "High").length;
-  const medium = tickets.filter((t) => t.priority === "Medium").length;
-  const low = tickets.filter((t) => t.priority === "Low").length;
-
-
-  // Compute tickets created in the last 7 days
-const [last7DaysData, setLast7DaysData] = useState([]);
+  const high = tickets.filter((t) => t.priority === 3).length; // priority 3 = High
+  const medium = tickets.filter((t) => t.priority === 2).length; // priority 2 = Medium
+  const low = tickets.filter((t) => t.priority === 1).length; // priority 1 = Low
 
 useEffect(() => {
   if (tickets.length > 0) {
     calculateLast7Days();
+  } else {
+    setLast7DaysData([]);
   }
 }, [tickets]);
-
-const calculateLast7Days = () => {
-  const today = new Date();
-  const daysArray = [];
-
-  // Create an array for the last 7 days
-  for (let i = 6; i >= 0; i++) {
-    const d = new Date();
-    d.setDate(today.getDate() - i);
-    daysArray.push({
-      date: d.toISOString().split("T")[0], // YYYY-MM-DD
-      count: 0,
-    });
-  }
-
-  // Count tickets created on each day
-  tickets.forEach((ticket) => {
-    const createdDate = ticket.created_at?.split("T")[0];
-    const day = daysArray.find((d) => d.date === createdDate);
-    if (day) day.count += 1;
-  });
-
-  setLast7DaysData(daysArray);
-};
 
   return (
     <div className="container-fluid px-4">
@@ -148,8 +143,8 @@ const calculateLast7Days = () => {
         <div className="col-12 col-sm-6 col-lg-3">
           <div className="card text-center shadow-sm">
             <div className="card-body">
-              <h5>Closed</h5>
-              <h2>{closed}</h2>
+              <h5>Resolved</h5>
+              <h2>{resolved}</h2>
             </div>
           </div>
         </div>
@@ -165,10 +160,10 @@ const calculateLast7Days = () => {
 
               <Pie
                 data={{
-                  labels: ["Open", "In Progress", "Closed"],
+                  labels: ["Open", "In Progress", "Resolved"],
                   datasets: [
                     {
-                      data: [open, inProgress, closed],
+                      data: [open, inProgress, resolved],
                       backgroundColor: ["#007bff", "#ffc107", "#28a745"],
                     },
                   ],
@@ -266,8 +261,8 @@ const calculateLast7Days = () => {
                     {myTickets.map((t) => (
                       <tr key={t.id}>
                         <td>{t.title}</td>
-                        <td>{t.status}</td>
-                        <td>{t.priority}</td>
+                        <td>{STATUS_MAP[t.status] || "Unknown"}</td>
+                        <td>{PRIORITY_MAP[t.priority] || "Unknown"}</td>
                         <td>
                           <Link
                             to={`/ticket/${t.id}`}
@@ -296,7 +291,7 @@ const calculateLast7Days = () => {
                   <li key={a.id} className="list-group-item">
                     <strong>{a.title}</strong>
                     <br />
-                    Status: {a.status}
+                    Status: {STATUS_MAP[a.status] || "Unknown"}
                     <br />
                     <small className="text-muted">
                       Updated: {new Date(a.updated_at).toLocaleString()}

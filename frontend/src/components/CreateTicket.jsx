@@ -1,28 +1,17 @@
 import { useEffect, useState } from "react";
 import API from "../api";
-
-const PRIORITY_MAP = {
-  1: "Low",
-  2: "Medium",
-  3: "High",
-};
-
-const STATUS_MAP = {
-  1: "Open",
-  2: "In Progress",
-  3: "Resolved",
-};
-
+import { PRIORITY_OPTIONS, STATUS_OPTIONS } from "../utils";
 
 export default function CreateTicket() {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     title: "",
     description: "",
     priority: 1,
     status: 1,
-    assignee: "",
-    reporter: "",
+    assignee: 0,
+    reporter: 0,
   });
 
   // Fetch users from backend
@@ -33,35 +22,55 @@ export default function CreateTicket() {
 
         // Auto-fill reporter with first user
         if (res.data.length > 0) {
-          setForm((prev) => ({ ...prev, reporter: res.data[0].id }));
+          setForm((prev) => ({ 
+            ...prev, 
+            reporter: res.data[0].id,
+            assignee: res.data[0].id 
+          }));
         }
+        setLoading(false);
       })
-      .catch((err) => console.error("Error fetching users:", err));
+      .catch((err) => {
+        console.error("Error fetching users:", err);
+        setLoading(false);
+      });
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let parsedValue = value;
+    // Convert numeric fields
+    if (["priority", "status", "assignee", "reporter"].includes(name)) {
+      parsedValue = parseInt(value) || value;
+    }
+    setForm({ ...form, [name]: parsedValue });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const payload = {
-      title: form.title,
-      description: form.description,
-      priority: PRIORITY_MAP[form.priority],
-      status: STATUS_MAP[form.status],
-      assignee: Number(form.assignee),
-      reporter: Number(form.reporter),
-    };
-
     try {
-      const res = await API.post("/tickets", payload);
-      console.log("Ticket created:", res.data);
+      console.log("Submitting ticket:", form);
+      const submitForm = {
+        ...form,
+        priority: parseInt(form.priority),
+        status: parseInt(form.status),
+        assignee: parseInt(form.assignee),
+        reporter: parseInt(form.reporter),
+      };
+      await API.post("/tickets", submitForm);
       alert("Ticket created successfully!");
+      // Reset form
+      setForm({
+        title: "",
+        description: "",
+        priority: 1,
+        status: 1,
+        assignee: "",
+        reporter: "",
+      });
     } catch (err) {
       console.error("Error creating ticket:", err);
-      alert("Failed to create ticket");
+      alert("Failed to create ticket: " + (err.response?.data?.error || err.message));
     }
   };
 
@@ -102,9 +111,9 @@ export default function CreateTicket() {
               value={form.priority}
               onChange={handleChange}
             >
-              {Object.entries(PRIORITY_MAP).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
+              {PRIORITY_OPTIONS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
                 </option>
               ))}
             </select>
@@ -118,9 +127,9 @@ export default function CreateTicket() {
               value={form.status}
               onChange={handleChange}
             >
-              {Object.entries(STATUS_MAP).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
                 </option>
               ))}
             </select>
@@ -133,13 +142,13 @@ export default function CreateTicket() {
           <select
             name="assignee"
             className="form-select"
-            value={form.assignee}
+            value={String(form.assignee)}
             onChange={handleChange}
             required
           >
             <option value="">Select a user</option>
             {users.map((u) => (
-              <option key={u.id} value={u.id}>
+              <option key={u.id} value={String(u.id)}>
                 {u.name}
               </option>
             ))}
@@ -152,12 +161,13 @@ export default function CreateTicket() {
           <select
             name="reporter"
             className="form-select"
-            value={form.reporter}
+            value={String(form.reporter)}
             onChange={handleChange}
             required
           >
+            <option value="">Select a user</option>
             {users.map((u) => (
-              <option key={u.id} value={u.id}>
+              <option key={u.id} value={String(u.id)}>
                 {u.name}
               </option>
             ))}

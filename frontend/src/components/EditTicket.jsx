@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api";
-
-const PRIORITY_MAP = { Low: 1, Medium: 2, High: 3 };
-const STATUS_MAP = { Open: 1, "In Progress": 2, Resolved: 3 };
-
-const PRIORITY_REVERSE = { 1: "Low", 2: "Medium", 3: "High" };
-const STATUS_REVERSE = { 1: "Open", 2: "In Progress", 3: "Resolved" };
+import { PRIORITY_OPTIONS, STATUS_OPTIONS } from "../utils";
 
 export default function EditTicket() {
   const { id } = useParams();
@@ -40,8 +35,8 @@ export default function EditTicket() {
         setForm({
           title: t.title,
           description: t.description,
-          priority: PRIORITY_MAP[t.priority],
-          status: STATUS_MAP[t.status],
+          priority: t.priority,
+          status: t.status,
           assignee: t.assignee,
           reporter: t.reporter,
         });
@@ -56,31 +51,32 @@ export default function EditTicket() {
   }, [id]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let parsedValue = value;
+    // Convert numeric fields
+    if (["priority", "status", "assignee", "reporter"].includes(name)) {
+      parsedValue = parseInt(value) || value;
+    }
+    setForm({ ...form, [name]: parsedValue });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // PLACE PAYLOAD HERE
-    const payload = {
-      title: form.title,
-      description: form.description,
-      priority: PRIORITY_REVERSE[form.priority],
-      status: STATUS_REVERSE[form.status],
-      assignee: Number(form.assignee),
-      reporter: Number(form.reporter),
-    };
-
     try {
-      // USE PAYLOAD HERE
-      await API.put(`/tickets/${id}`, payload);
-
+      const submitForm = {
+        ...form,
+        priority: parseInt(form.priority),
+        status: parseInt(form.status),
+        assignee: parseInt(form.assignee),
+        reporter: parseInt(form.reporter),
+      };
+      await API.put(`/tickets/${id}`, submitForm);
       alert("Ticket updated successfully");
       navigate(`/ticket/${id}`);
     } catch (err) {
       console.error("Error updating ticket:", err);
-      alert("Failed to update ticket");
+      alert("Failed to update ticket: " + (err.response?.data?.error || err.message));
     }
   };
 
