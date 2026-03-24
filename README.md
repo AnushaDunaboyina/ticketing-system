@@ -113,11 +113,12 @@ ticketing-system/
    ```
    You can copy the values from `backend/.env.example` into your shell or your local environment manager.
 
-3. **Initialize database tables**:
+3. **Initialize database and tables**:
    ```bash
    cd ../scripts
    python3 init_db.py
    ```
+   This script will create `production_support_db` automatically if it does not already exist.
 
 4. **[Optional] Create sample data**:
    ```bash

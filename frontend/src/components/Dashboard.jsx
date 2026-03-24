@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../api";
 import { STATUS_MAP, PRIORITY_MAP } from "../utils";
+import "../styles/Dashboard.css";
 
-// Chart.js imports
 import { Pie, Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -15,7 +15,6 @@ import {
   BarElement,
 } from "chart.js";
 
-// Register chart components
 ChartJS.register(
   ArcElement,
   Tooltip,
@@ -25,11 +24,12 @@ ChartJS.register(
   BarElement
 );
 
+const STATUS_COLORS = ["#ff6b57", "#f2b134", "#22a06b"];
+const PRIORITY_COLORS = ["#ca3c66", "#f0b44c", "#4c7cf0"];
+
 const Dashboard = () => {
   const [tickets, setTickets] = useState([]);
-  const [myTickets, setMyTickets] = useState([]);
   const [activity, setActivity] = useState([]);
-  const [last7DaysData, setLast7DaysData] = useState([]);
 
   async function fetchTickets() {
     try {
@@ -38,16 +38,13 @@ const Dashboard = () => {
 
       setTickets(allTickets);
 
-      // Tickets assigned to logged-in user (placeholder - assignee is numeric ID)
-      // TODO: Implement real user authentication
-      setMyTickets([]);
-
       const activityFeed = allTickets
-        .map((t) => ({
-          id: t.id,
-          title: t.title,
-          status: t.status,
-          updated_at: t.updated_at || t.created_at,
+        .map((ticket) => ({
+          id: ticket.id,
+          title: ticket.title,
+          status: ticket.status,
+          priority: ticket.priority,
+          updated_at: ticket.updated_at || ticket.created_at,
         }))
         .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
         .slice(0, 5);
@@ -60,249 +57,266 @@ const Dashboard = () => {
     }
   }
 
-  function calculateLast7Days() {
-    const today = new Date();
-    const daysArray = [];
-
-    // Create an array for the last 7 days.
-    for (let i = 6; i >= 0; i -= 1) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-      daysArray.push({
-        date: d.toISOString().split("T")[0],
-        count: 0,
-      });
-    }
-
-    tickets.forEach((ticket) => {
-      const createdDate = ticket.created_at?.split("T")[0];
-      const day = daysArray.find((d) => d.date === createdDate);
-      if (day) {
-        day.count += 1;
-      }
-    });
-
-    setLast7DaysData(daysArray);
-  }
-
   useEffect(() => {
     fetchTickets();
   }, []);
 
-  // KPI Calculations
   const total = tickets.length;
-  const open = tickets.filter((t) => t.status === 1).length; // status 1 = Open
-  const inProgress = tickets.filter((t) => t.status === 2).length; // status 2 = In Progress
-  const resolved = tickets.filter((t) => t.status === 3).length; // status 3 = Resolved
+  const open = tickets.filter((ticket) => ticket.status === 1).length;
+  const inProgress = tickets.filter((ticket) => ticket.status === 2).length;
+  const resolved = tickets.filter((ticket) => ticket.status === 3).length;
 
-  const high = tickets.filter((t) => t.priority === 3).length; // priority 3 = High
-  const medium = tickets.filter((t) => t.priority === 2).length; // priority 2 = Medium
-  const low = tickets.filter((t) => t.priority === 1).length; // priority 1 = Low
+  const high = tickets.filter((ticket) => ticket.priority === 3).length;
+  const medium = tickets.filter((ticket) => ticket.priority === 2).length;
+  const low = tickets.filter((ticket) => ticket.priority === 1).length;
 
-useEffect(() => {
-  if (tickets.length > 0) {
-    calculateLast7Days();
-  } else {
-    setLast7DaysData([]);
-  }
-}, [tickets]);
+  const resolutionRate = total === 0 ? 0 : Math.round((resolved / total) * 100);
+  const focusTickets = [...tickets]
+    .filter((ticket) => ticket.priority === 3 || ticket.status !== 3)
+    .sort((a, b) => {
+      const priorityDelta = (b.priority || 0) - (a.priority || 0);
+      if (priorityDelta !== 0) {
+        return priorityDelta;
+      }
+      return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
+    })
+    .slice(0, 4);
 
   return (
-    <div className="container-fluid px-4">
-      <h2 className="mb-4"> </h2>
+    <div className="dashboard-shell">
+      <section className="dashboard-hero">
+        <div className="dashboard-hero-copy">
+          <span className="dashboard-eyebrow">Support Operations Dashboard</span>
+          <h1 className="dashboard-title">A cleaner view of what needs attention right now.</h1>
+          <p className="dashboard-subtitle">
+            Track open work, watch backlog health, and jump directly into the
+            next ticket or user action without digging through tables first.
+          </p>
 
-      {/* KPI CARDS */}
-      <div className="row mb-4">
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card text-center shadow-sm">
-            <div className="card-body">
-              <h5>Total Tickets</h5>
-              <h2>{total}</h2>
-            </div>
+          <div className="dashboard-actions">
+            <Link to="/create" className="btn dashboard-primary-action">
+              Create Ticket
+            </Link>
+            <Link to="/tickets" className="btn dashboard-secondary-action">
+              View All Tickets
+            </Link>
+            <Link to="/users/new" className="btn dashboard-tertiary-action">
+              Add User
+            </Link>
           </div>
         </div>
 
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card text-center shadow-sm">
-            <div className="card-body">
-              <h5>Open</h5>
-              <h2>{open}</h2>
+        <div className="dashboard-hero-panel">
+          <div className="dashboard-hero-panel-label">Queue Health</div>
+          <div className="dashboard-hero-panel-value">{resolutionRate}%</div>
+          <div className="dashboard-hero-panel-text">
+            of all tickets are currently resolved.
+          </div>
+
+          <div className="dashboard-mini-stats">
+            <div className="dashboard-mini-stat">
+              <span>Open queue</span>
+              <strong>{open}</strong>
+            </div>
+            <div className="dashboard-mini-stat">
+              <span>In progress</span>
+              <strong>{inProgress}</strong>
+            </div>
+            <div className="dashboard-mini-stat">
+              <span>High priority</span>
+              <strong>{high}</strong>
             </div>
           </div>
         </div>
+      </section>
 
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card text-center shadow-sm">
-            <div className="card-body">
-              <h5>In Progress</h5>
-              <h2>{inProgress}</h2>
+      <section className="dashboard-kpis">
+        <article className="dashboard-kpi-card">
+          <span className="dashboard-kpi-label">Total Tickets</span>
+          <strong className="dashboard-kpi-value">{total}</strong>
+          <p className="dashboard-kpi-note">All tickets currently tracked in the system.</p>
+        </article>
+
+        <article className="dashboard-kpi-card">
+          <span className="dashboard-kpi-label">Open Issues</span>
+          <strong className="dashboard-kpi-value">{open}</strong>
+          <p className="dashboard-kpi-note">Work waiting to be picked up or triaged.</p>
+        </article>
+
+        <article className="dashboard-kpi-card">
+          <span className="dashboard-kpi-label">Resolved</span>
+          <strong className="dashboard-kpi-value">{resolved}</strong>
+          <p className="dashboard-kpi-note">Completed work contributing to closure rate.</p>
+        </article>
+
+        <article className="dashboard-kpi-card">
+          <span className="dashboard-kpi-label">Critical Focus</span>
+          <strong className="dashboard-kpi-value">{high}</strong>
+          <p className="dashboard-kpi-note">High-priority tickets that need fast attention.</p>
+        </article>
+      </section>
+
+      <section className="dashboard-charts">
+        <article className="dashboard-card">
+          <div className="dashboard-card-header">
+            <div>
+              <h2>Status Breakdown</h2>
+              <p>See how the queue is distributed across ticket lifecycle stages.</p>
             </div>
           </div>
-        </div>
 
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card text-center shadow-sm">
-            <div className="card-body">
-              <h5>Resolved</h5>
-              <h2>{resolved}</h2>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* CHARTS */}
-      <div className="row mb-4">
-        {/* STATUS PIE CHART */}
-        <div className="col-12 col-lg-6">
-          <div className="card shadow-sm">
-            <div className="card-body">
-              <h5>Status Breakdown</h5>
-
-              <Pie
-                data={{
-                  labels: ["Open", "In Progress", "Resolved"],
-                  datasets: [
-                    {
-                      data: [open, inProgress, resolved],
-                      backgroundColor: ["#007bff", "#ffc107", "#28a745"],
-                    },
-                  ],
-                }}
-              />
-            </div>
-            <p className="text-muted mt-2" style={{ fontSize: "0.9rem" }}>Current distribution of all tickets</p>
-
-          </div>
-        </div>
-
-        {/* PRIORITY BAR CHART */}
-        <div className="col-12 col-lg-6">
-          <div className="card shadow-sm">
-            <div className="card-body">
-              <h5>Priority Breakdown</h5>
-
-              <Bar
-                data={{
-                  labels: ["High", "Medium", "Low"],
-                  datasets: [
-                    {
-                      label: "Tickets",
-                      data: [high, medium, low],
-                      backgroundColor: ["#dc3545", "#ffc107", "#17a2b8"],
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: { display: false },
-                  },
-                }}
-              />
-            </div>
-            <p className="text-muted mt-2" style={{ fontSize: "0.9rem" }}>Current distribution of all tickets</p>
-          </div>
-        </div>
-      </div>
-
-      {/* TICKETS CREATED IN LAST 7 DAYS */}
-      <div className="col-md-12 mt-4">
-        <div className="card shadow-sm">
-          <div className="card-body">
-            <h5>Tickets Created in Last 7 Days</h5>
-
-            <Bar
+          <div className="dashboard-chart-wrap dashboard-chart-wrap-pie">
+            <Pie
               data={{
-                labels: last7DaysData.map((d) =>
-                  new Date(d.date).toLocaleDateString("en-US", {
-                    weekday: "short",
-                  })
-                ),
+                labels: ["Open", "In Progress", "Resolved"],
                 datasets: [
                   {
-                    label: "Tickets",
-                    data: last7DaysData.map((d) => d.count),
-                    backgroundColor: "#007bff",
+                    data: [open, inProgress, resolved],
+                    backgroundColor: STATUS_COLORS,
+                    borderWidth: 0,
                   },
                 ],
               }}
               options={{
-                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: "bottom",
+                    labels: {
+                      usePointStyle: true,
+                      boxWidth: 10,
+                      padding: 18,
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+        </article>
+
+        <article className="dashboard-card">
+          <div className="dashboard-card-header">
+            <div>
+              <h2>Priority Breakdown</h2>
+              <p>Understand the pressure level across your current backlog.</p>
+            </div>
+          </div>
+
+          <div className="dashboard-chart-wrap">
+            <Bar
+              data={{
+                labels: ["High", "Medium", "Low"],
+                datasets: [
+                  {
+                    label: "Tickets",
+                    data: [high, medium, low],
+                    backgroundColor: PRIORITY_COLORS,
+                    borderRadius: 12,
+                    borderSkipped: false,
+                  },
+                ],
+              }}
+              options={{
+                maintainAspectRatio: false,
+                scales: {
+                  x: {
+                    grid: { display: false },
+                  },
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      precision: 0,
+                    },
+                  },
+                },
                 plugins: {
                   legend: { display: false },
                 },
               }}
             />
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
 
-      {/* MY TICKETS + RECENT ACTIVITY */}
-      <div className="row">
-        {/* My Tickets */}
-        <div className="col-12 col-lg-8">
-          <div className="card shadow-sm mb-4">
-            <div className="card-body">
-              <h5>My Tickets</h5>
+      <section className="dashboard-bottom-grid">
+        <article className="dashboard-card">
+          <div className="dashboard-card-header">
+            <div>
+              <h2>Priority Queue</h2>
+              <p>The tickets most likely to deserve immediate attention.</p>
+            </div>
+            <Link to="/tickets" className="dashboard-inline-link">
+              View all
+            </Link>
+          </div>
 
-              {myTickets.length === 0 ? (
-                <p className="text-muted">No tickets assigned to you.</p>
-              ) : (
-                <table className="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Status</th>
-                      <th>Priority</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {myTickets.map((t) => (
-                      <tr key={t.id}>
-                        <td>{t.title}</td>
-                        <td>{STATUS_MAP[t.status] || "Unknown"}</td>
-                        <td>{PRIORITY_MAP[t.priority] || "Unknown"}</td>
-                        <td>
-                          <Link
-                            to={`/ticket/${t.id}`}
-                            className="btn btn-sm btn-primary"
-                          >
-                            View
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+          {focusTickets.length === 0 ? (
+            <div className="dashboard-empty-state">
+              No tickets yet. Create the first one to start tracking work.
+            </div>
+          ) : (
+            <div className="dashboard-focus-list">
+              {focusTickets.map((ticket) => (
+                <Link
+                  key={ticket.id}
+                  to={`/ticket/${ticket.id}`}
+                  className="dashboard-focus-item"
+                >
+                  <div className="dashboard-focus-main">
+                    <span className="dashboard-focus-title">{ticket.title}</span>
+                    <span className="dashboard-focus-meta">
+                      Ticket #{ticket.id}
+                    </span>
+                  </div>
+
+                  <div className="dashboard-focus-badges">
+                    <span className={`dashboard-badge status-${ticket.status}`}>
+                      {STATUS_MAP[ticket.status] || "Unknown"}
+                    </span>
+                    <span className={`dashboard-badge priority-${ticket.priority}`}>
+                      {PRIORITY_MAP[ticket.priority] || "Unknown"}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </article>
+
+        <article className="dashboard-card">
+          <div className="dashboard-card-header">
+            <div>
+              <h2>Recent Activity</h2>
+              <p>Most recently updated tickets across the workspace.</p>
             </div>
           </div>
-        </div>
 
-        {/* Recent Activity */}
-        <div className="col-12 col-sm-6 col-lg-4">
-          <div className="card shadow-sm">
-            <div className="card-body">
-              <h5>Recent Activity</h5>
-
-              <ul className="list-group">
-                {activity.map((a) => (
-                  <li key={a.id} className="list-group-item">
-                    <strong>{a.title}</strong>
-                    <br />
-                    Status: {STATUS_MAP[a.status] || "Unknown"}
-                    <br />
-                    <small className="text-muted">
-                      Updated: {new Date(a.updated_at).toLocaleString()}
+          {activity.length === 0 ? (
+            <div className="dashboard-empty-state">
+              No recent activity yet. Ticket updates will appear here.
+            </div>
+          ) : (
+            <div className="dashboard-activity-list">
+              {activity.map((item) => (
+                <div key={item.id} className="dashboard-activity-item">
+                  <div className="dashboard-activity-marker" />
+                  <div className="dashboard-activity-content">
+                    <div className="dashboard-activity-header">
+                      <strong>{item.title}</strong>
+                      <span className={`dashboard-badge status-${item.status}`}>
+                        {STATUS_MAP[item.status] || "Unknown"}
+                      </span>
+                    </div>
+                    <small className="dashboard-activity-time">
+                      Updated {new Date(item.updated_at).toLocaleString()}
                     </small>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
-      </div>
+          )}
+        </article>
+      </section>
     </div>
   );
 };

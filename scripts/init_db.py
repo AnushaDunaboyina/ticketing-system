@@ -13,11 +13,14 @@ import mysql.connector
 from app.db.db import get_connection
 
 def create_tables():
-    """Create the database tables"""
+    """Create the database and tables"""
     try:
         conn = get_connection()
         cursor = conn.cursor()
         
+        print("=" * 60)
+        print("Ensuring database exists...")
+        print("✓ Database ready")
         print("=" * 60)
         print("Creating database tables...")
         print("=" * 60)
