@@ -1,8 +1,12 @@
 from flask import Flask, jsonify, request, abort
 from Controller import user_controller as uc
 from Controller import ticket_controller as tc
+from flask_cors import CORS
 
 app = Flask(__name__)
+
+CORS(app)
+
 
 @app.route('/users', methods=['GET'])
 def list_users():
@@ -67,7 +71,7 @@ def create_ticket():
     title = req.get('title', '')
     description = req.get('description', '')
     priority = req.get('priority', 1)
-    status = req.get('status', 'Open')
+    status = req.get('status', 1)
     ticket = tc.create(
         assignee=assignee,
         reporter=reporter,
