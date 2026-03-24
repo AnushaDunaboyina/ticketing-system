@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import API from "../api";
 
-const PRIORITY_OPTIONS = [
-  { value: 1, label: "Low" },
-  { value: 2, label: "Medium" },
-  { value: 3, label: "High" },
-];
+const PRIORITY_MAP = {
+  1: "Low",
+  2: "Medium",
+  3: "High",
+};
 
-const STATUS_OPTIONS = [
-  { value: 1, label: "Open" },
-  { value: 2, label: "In Progress" },
-  { value: 3, label: "Resolved" },
-];
+const STATUS_MAP = {
+  1: "Open",
+  2: "In Progress",
+  3: "Resolved",
+};
+
 
 export default function CreateTicket() {
   const [users, setUsers] = useState([]);
@@ -42,10 +43,26 @@ export default function CreateTicket() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting ticket:", form);
-    alert("Ticket created (mock mode)");
+
+    const payload = {
+      title: form.title,
+      description: form.description,
+      priority: PRIORITY_MAP[form.priority],
+      status: STATUS_MAP[form.status],
+      assignee: Number(form.assignee),
+      reporter: Number(form.reporter),
+    };
+
+    try {
+      const res = await API.post("/tickets", payload);
+      console.log("Ticket created:", res.data);
+      alert("Ticket created successfully!");
+    } catch (err) {
+      console.error("Error creating ticket:", err);
+      alert("Failed to create ticket");
+    }
   };
 
   return (
@@ -85,9 +102,9 @@ export default function CreateTicket() {
               value={form.priority}
               onChange={handleChange}
             >
-              {PRIORITY_OPTIONS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
+              {Object.entries(PRIORITY_MAP).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
                 </option>
               ))}
             </select>
@@ -101,9 +118,9 @@ export default function CreateTicket() {
               value={form.status}
               onChange={handleChange}
             >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
+              {Object.entries(STATUS_MAP).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
                 </option>
               ))}
             </select>
