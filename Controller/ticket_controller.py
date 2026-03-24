@@ -1,3 +1,4 @@
+from Models import ticket
 from Models.ticket import Ticket
 
 tickets = []
@@ -32,9 +33,9 @@ def update(ticket_id, assignee=None, reporter=None, title=None, description=None
         if status is not None:
             ticket.status = status
 
-        if not (1 <= ticket.priority <= 4):
-            raise ValueError("Priority must be between 1 and 4")
-        if ticket.status not in ["Open", "In Progress", "Complete"]:
+        if not (1 <= ticket.priority <= 3):
+            raise ValueError("Priority must be between 1 and 3")
+        if ticket.status not in [1, 2, 3]:            
             raise ValueError("Status must be one of: Open, In Progress, Complete")
         return ticket
 
