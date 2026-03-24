@@ -6,15 +6,18 @@ import API from "../api";
 const UsersList = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
+  const [error, setError] = useState("");
 
   // Fetch all users
   const fetchUsers = async () => {
     try {
       const response = await API.get("/users");
-      setUsers(response.data);
+      setUsers(Array.isArray(response.data) ? response.data : []);
+      setError("");
     } catch (error) {
       console.error("Error fetching users:", error);
       setUsers([]);
+      setError("Unable to load users right now.");
     }
   };
 
@@ -31,20 +34,24 @@ const UsersList = () => {
       fetchUsers(); // refresh list
     } catch (error) {
       console.error("Error deleting user:", error);
+      setError(error.response?.data?.error || "Unable to delete this user.");
     }
   };
 
   return (
-    <div className="container">
-      <h2>Users</h2>
+    <div className="container mt-4">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2 className="mb-0">Users</h2>
 
-      <button
-        className="btn btn-primary"
-        onClick={() => navigate("/users/new")}
-        style={{ marginBottom: "15px" }}
-      >
-        + Add New User
-      </button>
+        <button
+          className="btn btn-primary"
+          onClick={() => navigate("/users/new")}
+        >
+          + Add New User
+        </button>
+      </div>
+
+      {error ? <div className="alert alert-danger">{error}</div> : null}
 
       <table className="table table-bordered table-striped">
         <thead>

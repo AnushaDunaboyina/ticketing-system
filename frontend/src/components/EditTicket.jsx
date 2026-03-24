@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api";
@@ -18,6 +19,7 @@ export default function EditTicket() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // Fetch ticket + users
   useEffect(() => {
@@ -28,7 +30,9 @@ export default function EditTicket() {
           API.get("/users"),
         ]);
 
-        setUsers(usersRes.data);
+        const fetchedUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
+        setUsers(fetchedUsers);
+        setError("");
 
         // Pre-fill form with ticket data
         const t = ticketRes.data;
@@ -42,6 +46,7 @@ export default function EditTicket() {
         });
       } catch (err) {
         console.error("Error loading ticket:", err);
+        setError("Unable to load ticket details.");
       } finally {
         setLoading(false);
       }
@@ -81,6 +86,28 @@ export default function EditTicket() {
   };
 
   if (loading) return <div className="container mt-4">Loading...</div>;
+
+  if (users.length === 0) {
+    return (
+      <div className="container mt-4">
+        <div className="card p-4 shadow-sm">
+          <h2 className="mb-3">Edit Ticket #{id}</h2>
+          <p className="text-muted mb-3">
+            This ticket cannot be edited until at least one user exists in the system.
+          </p>
+          {error ? <div className="alert alert-danger">{error}</div> : null}
+          <div className="d-flex gap-2">
+            <Link to="/users/new" className="btn btn-primary">
+              Add User
+            </Link>
+            <Link to="/users" className="btn btn-outline-secondary">
+              View Users
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mt-4">

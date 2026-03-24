@@ -9,6 +9,7 @@ const TicketList = () => {
   const navigate = useNavigate();
 
   const [tickets, setTickets] = useState([]);
+  const [users, setUsers] = useState([]);
   
   // FILTER STATES
   const [priorityFilter, setPriorityFilter] = useState(null);
@@ -21,11 +22,16 @@ const TicketList = () => {
   
   async function fetchTickets() {
     try {
-      const response = await API.get("/tickets");
-      setTickets(Array.isArray(response.data) ? response.data : []);
+      const [ticketResponse, userResponse] = await Promise.all([
+        API.get("/tickets"),
+        API.get("/users"),
+      ]);
+      setTickets(Array.isArray(ticketResponse.data) ? ticketResponse.data : []);
+      setUsers(Array.isArray(userResponse.data) ? userResponse.data : []);
     } catch (error) {
       console.error("Error fetching tickets:", error);
       setTickets([]);
+      setUsers([]);
     }
   }
 
@@ -40,6 +46,11 @@ const TicketList = () => {
     setSearchQuery("");
     setSortKey(null);
     setSortOrder("desc");
+  };
+
+  const getUserName = (userId) => {
+    const user = users.find((entry) => entry.id === userId);
+    return user ? user.name : `User ${userId}`;
   };
 
 
@@ -59,6 +70,8 @@ const TicketList = () => {
       ticket.id.toString().includes(q) || // search by ID
       (ticket.title || "").toLowerCase().includes(q) || // search by title
       (ticket.description || "").toLowerCase().includes(q) || // search by description
+      getUserName(ticket.assignee).toLowerCase().includes(q) || // search by assignee name
+      getUserName(ticket.reporter).toLowerCase().includes(q) || // search by reporter name
       (ticket.assignee && ticket.assignee.toString().toLowerCase().includes(q)) || // search by assignee
       (ticket.reporter && ticket.reporter.toString().toLowerCase().includes(q)); // search by reporter
 
@@ -263,8 +276,8 @@ const TicketList = () => {
                 </span>
               </td>
               <td>{STATUS_MAP[ticket.status] || "Unknown"}</td>
-              <td>{ticket.assignee}</td>
-              <td>{ticket.reporter}</td>
+              <td>{getUserName(ticket.assignee)}</td>
+              <td>{getUserName(ticket.reporter)}</td>
               <td>{new Date(ticket.created_at).toLocaleString()}</td>
               <td>{ticket.description}</td>
             </tr>

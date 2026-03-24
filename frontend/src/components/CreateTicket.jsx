@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import API from "../api";
 import { PRIORITY_OPTIONS, STATUS_OPTIONS } from "../utils";
@@ -5,6 +6,7 @@ import { PRIORITY_OPTIONS, STATUS_OPTIONS } from "../utils";
 export default function CreateTicket() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -18,20 +20,23 @@ export default function CreateTicket() {
   useEffect(() => {
     API.get("/users")
       .then((res) => {
-        setUsers(res.data);
+        const fetchedUsers = Array.isArray(res.data) ? res.data : [];
+        setUsers(fetchedUsers);
+        setError("");
 
         // Auto-fill reporter with first user
-        if (res.data.length > 0) {
+        if (fetchedUsers.length > 0) {
           setForm((prev) => ({ 
             ...prev, 
-            reporter: res.data[0].id,
-            assignee: res.data[0].id 
+            reporter: fetchedUsers[0].id,
+            assignee: fetchedUsers[0].id 
           }));
         }
         setLoading(false);
       })
       .catch((err) => {
         console.error("Error fetching users:", err);
+        setError("Unable to load users right now.");
         setLoading(false);
       });
   }, []);
@@ -48,8 +53,10 @@ export default function CreateTicket() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (users.length === 0) {
+      return;
+    }
     try {
-      console.log("Submitting ticket:", form);
       const submitForm = {
         ...form,
         priority: parseInt(form.priority),
@@ -73,6 +80,32 @@ export default function CreateTicket() {
       alert("Failed to create ticket: " + (err.response?.data?.error || err.message));
     }
   };
+
+  if (loading) {
+    return <div className="container mt-4">Loading users...</div>;
+  }
+
+  if (users.length === 0) {
+    return (
+      <div className="container mt-4">
+        <div className="card p-4 shadow-sm">
+          <h2 className="mb-3">Create Ticket</h2>
+          <p className="text-muted mb-3">
+            Create at least one user first so you can choose an assignee and reporter.
+          </p>
+          {error ? <div className="alert alert-danger">{error}</div> : null}
+          <div className="d-flex gap-2">
+            <Link to="/users/new" className="btn btn-primary">
+              Add First User
+            </Link>
+            <Link to="/users" className="btn btn-outline-secondary">
+              View Users
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mt-4">
