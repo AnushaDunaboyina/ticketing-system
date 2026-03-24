@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "../styles/TicketList.css";
 import { useNavigate } from "react-router-dom";
+import API from "../api";
+
 
 const TicketList = () => {
 
@@ -26,8 +28,9 @@ const TicketList = () => {
   //Fetch all tickets from backend
   const fetchTickets = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/tickets");
+      const response = await API.get("/tickets");
       setTickets(response.data);
+      console.log("One ticket:", response.data[0]);
     } catch (error) {
       console.error("Error fetching tickets:", error);
       setTickets([
@@ -104,8 +107,8 @@ const TicketList = () => {
       ticket.id.toString().includes(q) || // search by ID
       ticket.title.toLowerCase().includes(q) || // search by title
       ticket.description.toLowerCase().includes(q) || // search by description
-      ticket.assignee.toLowerCase().includes(q) || // search by assignee
-      ticket.reporter.toLowerCase().includes(q); // search by reporter
+      ticket.assignee.toString.toLowerCase().includes(q) || // search by assignee
+      ticket.reporter.toString.toLowerCase().includes(q); // search by reporter
 
     if (!matchesSearch) return false;
 
@@ -237,9 +240,9 @@ const TicketList = () => {
                   <li>
                     <button
                       className="dropdown-item"
-                      onClick={() => setStatusFilter("Closed")}
+                      onClick={() => setStatusFilter("Resolved")}
                     >
-                      Closed
+                      Resolved
                     </button>
                   </li>
                 </ul>
@@ -314,8 +317,15 @@ const TicketList = () => {
                 </span>
               </td>
               <td>{ticket.status}</td>
-              <td>{ticket.assignee}</td>
-              <td>{ticket.reporter}</td>
+              <td
+                style={{ cursor: "pointer", color: "blue" }}
+                onClick={(e) => {
+                  e.stopPropagation(); // prevent row click
+                  navigate(`/users/${ticket.assignee}`);
+                }}
+              >
+                {ticket.assignee}
+              </td>              <td>{ticket.reporter}</td>
               <td>{new Date(ticket.created_at).toLocaleString()}</td>
               <td>{ticket.description}</td>
             </tr>

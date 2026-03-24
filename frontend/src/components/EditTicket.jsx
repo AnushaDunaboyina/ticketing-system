@@ -2,17 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api";
 
-const PRIORITY_OPTIONS = [
-  { value: 1, label: "Low" },
-  { value: 2, label: "Medium" },
-  { value: 3, label: "High" },
-];
+const PRIORITY_MAP = { Low: 1, Medium: 2, High: 3 };
+const STATUS_MAP = { Open: 1, "In Progress": 2, Resolved: 3 };
 
-const STATUS_OPTIONS = [
-  { value: 1, label: "Open" },
-  { value: 2, label: "In Progress" },
-  { value: 3, label: "Resolved" },
-];
+const PRIORITY_REVERSE = { 1: "Low", 2: "Medium", 3: "High" };
+const STATUS_REVERSE = { 1: "Open", 2: "In Progress", 3: "Resolved" };
 
 export default function EditTicket() {
   const { id } = useParams();
@@ -46,8 +40,8 @@ export default function EditTicket() {
         setForm({
           title: t.title,
           description: t.description,
-          priority: t.priority,
-          status: t.status,
+          priority: PRIORITY_MAP[t.priority],
+          status: STATUS_MAP[t.status],
           assignee: t.assignee,
           reporter: t.reporter,
         });
@@ -68,8 +62,20 @@ export default function EditTicket() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // PLACE PAYLOAD HERE
+    const payload = {
+      title: form.title,
+      description: form.description,
+      priority: PRIORITY_REVERSE[form.priority],
+      status: STATUS_REVERSE[form.status],
+      assignee: Number(form.assignee),
+      reporter: Number(form.reporter),
+    };
+
     try {
-      await API.put(`/tickets/${id}`, form);
+      // USE PAYLOAD HERE
+      await API.put(`/tickets/${id}`, payload);
+
       alert("Ticket updated successfully");
       navigate(`/ticket/${id}`);
     } catch (err) {

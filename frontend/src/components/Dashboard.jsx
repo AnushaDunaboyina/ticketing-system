@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import API from "../api";
+
 
 // Chart.js imports
 import { Pie, Bar } from "react-chartjs-2";
@@ -38,7 +40,7 @@ const Dashboard = () => {
 
   const fetchTickets = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/tickets");
+      const res = API.get("/tickets");
       const allTickets = res.data;
 
       setTickets(allTickets);
