@@ -1,0 +1,110 @@
+.table th {
+  background-color: #ffffff;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.table th.sort-active {
+  background-color: #f0f0f0;
+  font-weight: 700;
+}
+
+.sort-icon {
+  opacity: 0.4;
+  margin-left: 6px;
+}
+
+.sort-active .sort-icon {
+  opacity: 1;
+}
+
+.dropdown-toggle::after {
+  display: none !important;
+}
+
+/* Prevent headers from wrapping */
+.table th {
+  white-space: nowrap;
+}
+
+
+/* Column widths */
+th:nth-child(1) { width: 60px; }    /* ID */
+th:nth-child(2) { width: 280px; }   /* Title */
+th:nth-child(3) { width: 120px; }   /* Priority */
+th:nth-child(4) { width: 140px; }   /* Status */
+th:nth-child(5) { width: 150px; }   /* Assignee */
+th:nth-child(6) { width: 150px; }   /* Reporter */
+th:nth-child(7) { width: 160px; }   /* Created At */
+th:nth-child(8) { width: 380px; }   /* Description */
+
+
+.header-filter {
+  cursor: pointer;
+  padding: 6px 8px;
+  display: inline-block;
+}
+
+.header-filter:hover {
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.search-helper-text {
+  font-size: 12px;
+  color: #6c757d; /* Bootstrap muted color */
+  margin-left: 2px;
+}
+
+/* .search-helper-text {
+  display: block;
+  margin-top: 4px;
+  margin-left: 2px;
+  font-size: 12px;
+  color: #6c757d;
+} */
+
+
+.table tbody tr {
+  cursor: pointer;
+}
+
+.table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+
+/* priority coloring */
+.priority-low {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.priority-medium {
+  background-color: #f7c9af;
+  color: #8a4b00;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.priority-high {
+  background-color: #ee9f9f;
+  color: #860811;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Header */
+.table thead th {
+  background-color :#476caf;
+  /* color: #333; */
+  color: #ffffff;
+  font-weight: 600;
+}
+
+
