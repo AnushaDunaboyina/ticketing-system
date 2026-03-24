@@ -1,0 +1,10 @@
+{
+  "name": "ticketing-system",
+  "private": true,
+  "scripts": {
+    "db:init": "powershell -NoProfile -Command \"if (Get-Command py -ErrorAction SilentlyContinue) { py -3 scripts/init_db.py } else { python scripts/init_db.py }\"",
+    "dev:backend": "powershell -NoProfile -Command \"if (Get-Command py -ErrorAction SilentlyContinue) { py -3 backend/api.py } else { python backend/api.py }\"",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev": "npm run db:init && start \"backend\" cmd /k \"npm run dev:backend\" && npm run dev:frontend"
+  }
+}

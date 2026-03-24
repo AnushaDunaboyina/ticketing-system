@@ -4,7 +4,7 @@ class TicketRepository:
 
     def get_all(self):
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
 
         cursor.execute("""
             SELECT
@@ -21,14 +21,14 @@ class TicketRepository:
                 updated_at
             FROM tickets
         """)
-        tickets = cursor.fetchall()
+        tickets = [dict(row) for row in cursor.fetchall()]
 
         conn.close()
         return tickets
 
     def get_by_id(self, ticket_id):
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
 
         cursor.execute("""
             SELECT
@@ -44,12 +44,12 @@ class TicketRepository:
                 created_at,
                 updated_at
             FROM tickets
-            WHERE id=%s
+            WHERE id=?
         """, (ticket_id,))
         ticket = cursor.fetchone()
 
         conn.close()
-        return ticket
+        return dict(ticket) if ticket else None
 
     def create(self, data):
         conn = get_connection()
@@ -57,7 +57,7 @@ class TicketRepository:
 
         sql = """
         INSERT INTO tickets (title, description, status, priority, assigned_to, created_by)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        VALUES (?, ?, ?, ?, ?, ?)
         """
 
         cursor.execute(sql, (
@@ -78,9 +78,9 @@ class TicketRepository:
 
         sql = """
         UPDATE tickets
-        SET title=%s, description=%s, status=%s, priority=%s,
-            assigned_to=%s, created_by=%s
-        WHERE id=%s
+        SET title=?, description=?, status=?, priority=?,
+            assigned_to=?, created_by=?
+        WHERE id=?
         """
 
         cursor.execute(sql, (
@@ -100,6 +100,6 @@ class TicketRepository:
         conn = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("DELETE FROM tickets WHERE id=%s", (ticket_id,))
+        cursor.execute("DELETE FROM tickets WHERE id=?", (ticket_id,))
         conn.commit()
         conn.close()

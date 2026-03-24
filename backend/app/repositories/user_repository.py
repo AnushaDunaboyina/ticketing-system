@@ -4,29 +4,29 @@ class UserRepository:
 
     def get_all(self):
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM users")
-        data = cursor.fetchall()
+        data = [dict(row) for row in cursor.fetchall()]
 
         conn.close()
         return data
 
     def get_by_id(self, user_id):
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+        cursor.execute("SELECT * FROM users WHERE id=?", (user_id,))
         data = cursor.fetchone()
 
         conn.close()
-        return data
+        return dict(data) if data else None
 
     def create(self, data):
         conn = get_connection()
         cursor = conn.cursor()
 
-        sql = "INSERT INTO users (name, email, role) VALUES (%s, %s, %s)"
+        sql = "INSERT INTO users (name, email, role) VALUES (?, ?, ?)"
 
         cursor.execute(sql, (
             data["name"],
@@ -43,8 +43,8 @@ class UserRepository:
 
         sql = """
         UPDATE users
-        SET name=%s, email=%s, role=%s
-        WHERE id=%s
+        SET name=?, email=?, role=?
+        WHERE id=?
         """
 
         cursor.execute(sql, (
@@ -61,6 +61,6 @@ class UserRepository:
         conn = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("DELETE FROM users WHERE id=%s", (user_id,))
+        cursor.execute("DELETE FROM users WHERE id=?", (user_id,))
         conn.commit()
         conn.close()

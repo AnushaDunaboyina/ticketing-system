@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
 Database initialization script
-Creates the users and tickets tables in MySQL
+Creates the users and tickets tables in SQLite
 """
 import sys
 import os
+import sqlite3
 
 # Add backend directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend'))
 
-import mysql.connector
 from app.db.db import get_connection
 
 def create_tables():
@@ -19,19 +19,16 @@ def create_tables():
         cursor = conn.cursor()
         
         print("=" * 60)
-        print("Ensuring database exists...")
-        print("✓ Database ready")
-        print("=" * 60)
         print("Creating database tables...")
         print("=" * 60)
         
         # Create users table
         create_users_table = """
         CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            email VARCHAR(100) NOT NULL,
-            role VARCHAR(50) DEFAULT 'user',
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            role TEXT DEFAULT 'user',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
@@ -41,21 +38,34 @@ def create_tables():
         # Create tickets table
         create_tickets_table = """
         CREATE TABLE IF NOT EXISTS tickets (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
             description TEXT,
-            status INT DEFAULT 1 COMMENT '1=Open, 2=In Progress, 3=Resolved',
-            priority INT DEFAULT 1 COMMENT '1=Low, 2=Medium, 3=High',
-            assigned_to INT,
-            created_by INT,
+            status INTEGER DEFAULT 1,
+            priority INTEGER DEFAULT 1,
+            assigned_to INTEGER,
+            created_by INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
             FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
         )
         """
         cursor.execute(create_tickets_table)
         print("✓ Tickets table created")
+
+        create_update_trigger = """
+        CREATE TRIGGER IF NOT EXISTS set_ticket_updated_at
+        AFTER UPDATE ON tickets
+        FOR EACH ROW
+        BEGIN
+            UPDATE tickets
+            SET updated_at = CURRENT_TIMESTAMP
+            WHERE id = OLD.id;
+        END;
+        """
+        cursor.execute(create_update_trigger)
+        print("✓ Ticket update trigger created")
         
         conn.commit()
         conn.close()
@@ -64,12 +74,9 @@ def create_tables():
         print("✓ Database initialized successfully!")
         print("=" * 60)
         
-    except mysql.connector.Error as err:
-        if err.errno == 1050:
-            print("✓ Tables already exist")
-        else:
-            print(f"✗ Error: {err}")
-            return False
+    except sqlite3.Error as err:
+        print(f"✗ Error: {err}")
+        return False
     except Exception as e:
         print(f"✗ Error: {e}")
         return False
