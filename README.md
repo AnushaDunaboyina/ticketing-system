@@ -5,12 +5,12 @@ A full-stack web application for managing support tickets, inspired by enterpris
 ## 🏗️ Architecture
 
 ```
-Frontend (React) ↔️ Backend API (Flask) ↔️ Database (MySQL)
+Frontend (React) ↔️ Backend API (Flask) ↔️ Database (SQLite)
 ```
 
 - **Frontend**: React with React Router, Axios, Chart.js
 - **Backend**: Flask with CORS support
-- **Database**: MySQL (production_support_db)
+- **Database**: SQLite (`backend/data/ticketing.db`)
 
 ## 📁 Project Structure
 
@@ -36,7 +36,7 @@ ticketing-system/
 │       │   └── user.py                # User data model
 │       └── db/
 │           ├── __init__.py
-│           └── db.py                  # MySQL connection management
+│           └── db.py                  # SQLite connection management
 ├── scripts/
 │   ├── init_db.py                      # Database table initialization
 │   └── create_sample_data.py           # Sample data creation
@@ -90,11 +90,42 @@ ticketing-system/
 
 ## 🚀 Quick Start
 
+### Docker (Recommended for Full Stack)
+
+Run the frontend and backend together from the repository root:
+
+```bash
+docker compose up --build
+```
+
+Or use npm scripts:
+
+```bash
+npm run docker:build
+npm run docker:up
+```
+
+Services:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:5001`
+
+Stop containers:
+
+```bash
+npm run docker:down
+```
+
+Remove containers and volumes (clears SQLite data):
+
+```bash
+npm run docker:clean
+```
+
 ### Prerequisites
 - Python 3.8+
 - Node.js 16+
-- MySQL Server
-- Database: `production_support_db` (automatically created by `init_db.py`)
+- SQLite (bundled via Python `sqlite3`)
+- Database file: `backend/data/ticketing.db` (automatically created by `init_db.py`)
 
 ### Backend Setup
 

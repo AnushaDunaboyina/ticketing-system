@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from app.controllers import ticket_controller as tc
@@ -119,4 +121,8 @@ def delete_ticket(ticket_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(
+        host=os.getenv("FLASK_HOST", "0.0.0.0"),
+        debug=os.getenv("FLASK_DEBUG", "false").lower() == "true",
+        port=int(os.getenv("FLASK_PORT", "5001")),
+    )
