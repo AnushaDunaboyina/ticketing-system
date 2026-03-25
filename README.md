@@ -30,10 +30,6 @@ ticketing-system/
 │       │   ├── __init__.py
 │       │   ├── ticket_repository.py   # Ticket data access
 │       │   └── user_repository.py     # User data access
-│       ├── models/
-│       │   ├── __init__.py
-│       │   ├── ticket.py              # Ticket data model
-│       │   └── user.py                # User data model
 │       └── db/
 │           ├── __init__.py
 │           └── db.py                  # SQLite connection management
@@ -48,7 +44,6 @@ ticketing-system/
 │   ├── src/
 │   │   ├── main.jsx                    # React entry point
 │   │   ├── App.jsx                     # App routing
-│   │   ├── App.css                     # App styles
 │   │   ├── index.css                   # Global styles
 │   │   ├── api.js                      # Axios API client (port 5001)
 │   │   ├── utils.js                    # Utility functions & constants
@@ -61,8 +56,8 @@ ticketing-system/
 │   │   │   └── Navbar.jsx              # Navigation bar
 │   │   ├── styles/
 │   │   │   ├── Navbar.css
-│   │   │   └── TicketList.css
-│   │   └── assets/
+│   │   │   ├── TicketList.css
+│   │   │   └── WorkspacePages.css
 │   └── public/
 ├── README.md                           # This documentation
 ├── .gitignore                          # Git ignore rules
@@ -75,7 +70,6 @@ ticketing-system/
   - `api.py`: Main Flask application
   - `app/controllers/`: Business logic layer
   - `app/repositories/`: Data access layer (Database operations)
-  - `app/models/`: Data model definitions
   - `app/db/`: Database connection management
   - `requirements.txt`: Python dependencies
 
