@@ -3,14 +3,16 @@
 Database initialization script
 Creates the users and tickets tables in SQLite
 """
+from pathlib import Path
 import sys
-import os
 import sqlite3
 
-# Add backend directory to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend'))
+# Add the project root to Python path so backend can be imported as a package.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.db.db import get_connection
+from backend.app.db.db import get_connection
 
 def create_tables():
     """Create the database and tables"""

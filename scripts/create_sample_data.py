@@ -3,12 +3,6 @@
 Sample data creation script
 Creates sample users and tickets in the database
 """
-import sys
-import os
-
-# Add backend directory to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend'))
-
 import requests
 
 BASE_URL = "http://localhost:5001/api"

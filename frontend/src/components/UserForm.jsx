@@ -1,43 +1,44 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import API from "../api";
+import "../styles/WorkspacePages.css";
 
 const ROLE_OPTIONS = [
   { value: "user", label: "User" },
   { value: "support_engineer", label: "Support Engineer" },
+  { value: "software_engineer", label: "Software Engineer" },
+  { value: "qa_engineer", label: "QA Engineer" },
+  { value: "devops_engineer", label: "DevOps Engineer" },
   { value: "customer", label: "Customer" },
   { value: "admin", label: "Admin" },
 ];
 
 const UserForm = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // if id exists → edit mode
-
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "user",
   });
-
-  const isEditMode = Boolean(id);
   const [loading, setLoading] = useState(isEditMode);
   const [error, setError] = useState("");
 
-  // Fetch user details if editing
-  const fetchUser = async () => {
-    try {
-      const response = await API.get(`/users/${id}`);
-      setFormData(response.data);
-      setError("");
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      setError("Unable to load this user.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    async function fetchUser() {
+      try {
+        const response = await API.get(`/users/${id}`);
+        setFormData(response.data);
+        setError("");
+      } catch (fetchError) {
+        console.error("Error fetching user:", fetchError);
+        setError("Unable to load this user.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
     if (isEditMode) {
       fetchUser();
     } else {
@@ -45,106 +46,178 @@ const UserForm = () => {
     }
   }, [id, isEditMode]);
 
-  // Handle input change
-  const handleChange = (e) => {
+  const handleChange = (event) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [event.target.name]: event.target.value,
     });
   };
 
-  // Handle form submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
     try {
       if (isEditMode) {
-        await API.put(
-          `/users/${id}`,
-          formData
-        );
+        await API.put(`/users/${id}`, formData);
       } else {
         await API.post("/users", formData);
       }
 
-      navigate("/users"); // go back to list
-    } catch (error) {
-      console.error("Error saving user:", error);
-      setError(error.response?.data?.error || "Unable to save user.");
+      navigate("/users");
+    } catch (submitError) {
+      console.error("Error saving user:", submitError);
+      setError(submitError.response?.data?.error || "Unable to save user.");
     }
   };
 
   if (loading) {
-    return <div className="container mt-4">Loading user...</div>;
+    return <div className="workspace-shell">Loading user...</div>;
   }
 
   return (
-    <div className="container mt-4">
-      <h2>{isEditMode ? "Edit User" : "Add New User"}</h2>
+    <div className="workspace-shell">
+      <section className="workspace-hero">
+        <div className="workspace-hero-copy">
+          <span className="workspace-eyebrow">{isEditMode ? "Edit User" : "New User"}</span>
+          <h1 className="workspace-title">
+            {isEditMode ? "Update the teammate profile and keep ownership clean." : "Add a teammate so tickets can be routed properly."}
+          </h1>
+          <p className="workspace-subtitle">
+            User records power ticket ownership, reporting, and assignment, so a
+            clean directory makes every workflow feel more intentional.
+          </p>
 
-      <form
-        onSubmit={handleSubmit}
-        className="card p-4 shadow-sm"
-        style={{ maxWidth: "500px" }}
-      >
-        {error ? <div className="alert alert-danger">{error}</div> : null}
+          <div className="workspace-actions">
+            <Link to="/users" className="workspace-btn-secondary">
+              Back to Users
+            </Link>
+            <Link to="/tickets" className="workspace-btn-tertiary">
+              View Tickets
+            </Link>
+          </div>
 
-        {/* NAME */}
-        <div className="mb-3">
-          <label className="form-label">Name</label>
-          <input
-            type="text"
-            name="name"
-            className="form-control"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
+          <div className="workspace-badge-row">
+            <span className="workspace-stat-chip">
+              Mode <strong>{isEditMode ? "Edit" : "Create"}</strong>
+            </span>
+            <span className="workspace-stat-chip">
+              Role <strong>{ROLE_OPTIONS.find((role) => role.value === formData.role)?.label}</strong>
+            </span>
+          </div>
         </div>
 
-        {/* EMAIL */}
-        <div className="mb-3">
-          <label className="form-label">Email</label>
-          <input
-            type="email"
-            name="email"
-            className="form-control"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
+        <aside className="workspace-hero-panel">
+          <span className="workspace-panel-label">Profile Summary</span>
+          <strong className="workspace-panel-value">{formData.name || "New"}</strong>
+          <p className="workspace-panel-text">This profile will appear anywhere tickets reference team members.</p>
+
+          <div className="workspace-panel-list">
+            <div className="workspace-panel-item">
+              <span>Email</span>
+              <strong>{formData.email || "Pending"}</strong>
+            </div>
+            <div className="workspace-panel-item">
+              <span>Role</span>
+              <strong>{ROLE_OPTIONS.find((role) => role.value === formData.role)?.label}</strong>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section className="workspace-content-grid">
+        <div className="workspace-surface">
+          <div className="workspace-surface-header">
+            <div>
+              <h2>{isEditMode ? "Edit User" : "Create User"}</h2>
+              <p>Capture the core details that will be reused throughout the app.</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="workspace-form">
+            {error ? <div className="workspace-alert">{error}</div> : null}
+
+            <div className="workspace-field-group">
+              <label htmlFor="user-name">Name</label>
+              <input
+                id="user-name"
+                type="text"
+                name="name"
+                className="workspace-input"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="workspace-field-group">
+              <label htmlFor="user-email">Email</label>
+              <input
+                id="user-email"
+                type="email"
+                name="email"
+                className="workspace-input"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="workspace-field-group">
+              <label htmlFor="user-role">Role</label>
+              <select
+                id="user-role"
+                name="role"
+                className="workspace-select"
+                value={formData.role}
+                onChange={handleChange}
+              >
+                {ROLE_OPTIONS.map((role) => (
+                  <option key={role.value} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="workspace-form-actions">
+              <button type="submit" className="workspace-btn-primary">
+                {isEditMode ? "Save User" : "Create User"}
+              </button>
+              <button
+                type="button"
+                className="workspace-btn-secondary"
+                onClick={() => navigate("/users")}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
 
-        {/* ROLE */}
-        <div className="mb-3">
-          <label className="form-label">Role</label>
-          <select
-            name="role"
-            className="form-select"
-            value={formData.role}
-            onChange={handleChange}
-          >
-            {ROLE_OPTIONS.map((role) => (
-              <option key={role.value} value={role.value}>
-                {role.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <aside className="workspace-surface">
+          <div className="workspace-surface-header">
+            <div>
+              <h3>Role Guide</h3>
+              <p>Use roles consistently so the directory feels intentional.</p>
+            </div>
+          </div>
 
-        {/* BUTTONS */}
-        <button type="submit" className="btn btn-success" style={{ marginRight: "10px" }}>
-          Save
-        </button>
-
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => navigate("/users")}
-        >
-          Cancel
-        </button>
-      </form>
+          <div className="workspace-tip-list">
+            <div className="workspace-tip-card">
+              <strong>Support Engineer</strong>
+              <p>Best for teammates who actively triage and resolve incoming issues.</p>
+            </div>
+            <div className="workspace-tip-card">
+              <strong>Software, QA, and DevOps</strong>
+              <p>Use these for delivery teams when the ticket belongs with engineering, testing, or platform support.</p>
+            </div>
+            <div className="workspace-tip-card">
+              <strong>Customer, Admin, or User</strong>
+              <p>These work well for requesters, managers, and general system participants who are not default queue owners.</p>
+            </div>
+          </div>
+        </aside>
+      </section>
     </div>
   );
 };

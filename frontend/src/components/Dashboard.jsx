@@ -87,7 +87,7 @@ const Dashboard = () => {
       <section className="dashboard-hero">
         <div className="dashboard-hero-copy">
           <span className="dashboard-eyebrow">Support Operations Dashboard</span>
-          <h1 className="dashboard-title">A cleaner view of what needs attention right now.</h1>
+          <h1 className="dashboard-title">What needs attention.</h1>
           <p className="dashboard-subtitle">
             Track open work, watch backlog health, and jump directly into the
             next ticket or user action without digging through tables first.

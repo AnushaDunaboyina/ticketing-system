@@ -135,28 +135,19 @@ npm run docker:clean
    pip install -r requirements.txt
    ```
 
-2. **Configure database**:
-   ```bash
-   export DB_HOST=localhost
-   export DB_USER=root
-   export DB_PASSWORD=your_password
-   export DB_NAME=production_support_db
-   ```
-   You can copy the values from `backend/.env.example` into your shell or your local environment manager.
-
-3. **Initialize database and tables**:
+2. **Initialize the SQLite database and tables**:
    ```bash
    cd ../scripts
    python3 init_db.py
    ```
-   This script will create `production_support_db` automatically if it does not already exist.
+   This script creates `backend/data/ticketing.db` along with the `users` and `tickets` tables.
 
-4. **[Optional] Create sample data**:
+3. **[Optional] Create sample data**:
    ```bash
    python3 create_sample_data.py
    ```
 
-5. **Start Flask server** (from backend directory):
+4. **Start Flask server** (from backend directory):
    ```bash
    cd ../backend
    python3 api.py
@@ -185,26 +176,28 @@ npm run docker:clean
 ### Users Table
 ```sql
 CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100),
-    email VARCHAR(100),
-    role VARCHAR(50)
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    role TEXT DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 ### Tickets Table
 ```sql
 CREATE TABLE tickets (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255),
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
     description TEXT,
-    status INT (1=Open, 2=In Progress, 3=Resolved),
-    priority INT (1=Low, 2=Medium, 3=High),
-    assigned_to INT,
-    created_by INT,
-    created_at TIMESTAMP,
-    FOREIGN KEY (assigned_to) REFERENCES users(id),
-    FOREIGN KEY (created_by) REFERENCES users(id)
+    status INTEGER DEFAULT 1,
+    priority INTEGER DEFAULT 1,
+    assigned_to INTEGER,
+    created_by INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
 ```
 
@@ -261,15 +254,11 @@ The system uses `numeric` status and priority values for consistency:
 
 ## 🔐 Security Improvements Needed
 
-1. **Database Credentials**: Use environment variables (.env file)
+1. **Configuration**: Use environment variables (.env file) for Flask settings
    - Copy `backend/.env.example` to `backend/.env`
-   - Update with your actual database credentials
+   - Update host/debug/port values if needed
    ```bash
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASSWORD=your_password
-   DB_NAME=production_support_db
-   FLASK_ENV=development
+   FLASK_HOST=0.0.0.0
    FLASK_DEBUG=True
    FLASK_PORT=5001
    ```
@@ -345,11 +334,8 @@ This project demonstrates:
 
 - [ ] Install Python 3.8+
 - [ ] Install Node.js 16+
-- [ ] Install MySQL Server
-- [ ] Create database: `production_support_db` (or run `scripts/init_db.py`)
 - [ ] Navigate to `backend/` and install dependencies: `pip install -r requirements.txt`
-- [ ] Configure database credentials in `backend/app/db/db.py` (optional—uses defaults)
-- [ ] Navigate to `scripts/` and run `python3 init_db.py` to create tables
+- [ ] Navigate to `scripts/` and run `python3 init_db.py` to create `backend/data/ticketing.db`
 - [ ] [Optional] Run `python3 create_sample_data.py` to populate sample data
 - [ ] Navigate to `backend/` and start Flask: `python3 api.py` (port 5001)
 - [ ] Navigate to `frontend/` and install Node deps: `npm install`
@@ -375,7 +361,7 @@ This project demonstrates:
 
 - [Flask Documentation](https://flask.palletsprojects.com/)
 - [React Documentation](https://react.dev/)
-- [MySQL Connector Python](https://dev.mysql.com/doc/connector-python/en/)
+- [SQLite Documentation](https://www.sqlite.org/docs.html)
 - [Axios Documentation](https://axios-http.com/)
 - [Vite Documentation](https://vitejs.dev/)
 

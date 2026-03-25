@@ -6,11 +6,21 @@ export default function Navbar() {
   return (
     <nav className="navbar navbar-expand-lg custom-navbar px-3">
       <NavLink className="navbar-brand" to="/">
-        ResolveHub
+        <span className="navbar-brand-badge">
+          <img
+            src="/resolvehub-icon.png"
+            alt="ResolveHub icon"
+            className="navbar-brand-logo"
+          />
+        </span>
+        <span className="navbar-brand-copy">
+          <span className="navbar-brand-name">ResolveHub</span>
+          <span className="navbar-brand-tagline">From Incident to Insight</span>
+        </span>
       </NavLink>
 
       <button
-        className="navbar-toggler"
+        className="navbar-toggler custom-navbar-toggler"
         type="button"
         data-bs-toggle="collapse"
         data-bs-target="#navbarNav"
