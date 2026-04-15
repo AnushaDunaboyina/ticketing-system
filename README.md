@@ -86,22 +86,44 @@ ticketing-system/
 
 ### Docker (Recommended for Full Stack)
 
-Run the frontend and backend together from the repository root:
+The easiest way to run the project is with Docker Desktop.
 
-```bash
-docker compose up --build
-```
+1. **Install Docker Desktop**
+   - Mac / Windows: https://www.docker.com/products/docker-desktop/
+   - Open Docker Desktop and wait until it says Docker is running.
 
-Or use npm scripts:
+2. **Download the project**
+   ```bash
+   git clone https://github.com/AnushaDunaboyina/ticketing-system.git
+   cd ticketing-system
+   ```
+   If you do not have Git installed, you can also download the repository ZIP from GitHub and extract it locally.
+
+3. **Start the app**
+   Run the frontend and backend together from the repository root:
+
+   ```bash
+   docker compose up --build
+   ```
+
+4. **Open the app**
+   - Frontend: `http://localhost:5173`
+   - Backend API: `http://localhost:5001/api/tickets`
+
+5. **Stop the app**
+   In the terminal, press `Ctrl + C`, or run:
+   ```bash
+   docker compose down
+   ```
+
+#### Docker shortcuts
+
+You can also use the included npm scripts:
 
 ```bash
 npm run docker:build
 npm run docker:up
 ```
-
-Services:
-- Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:5001`
 
 Stop containers:
 
@@ -115,17 +137,23 @@ Remove containers and volumes (clears SQLite data):
 npm run docker:clean
 ```
 
-### Prerequisites
+### Manual Setup Prerequisites
 - Python 3.8+
 - Node.js 16+
 - SQLite (bundled via Python `sqlite3`)
 - Database file: `backend/data/ticketing.db` (automatically created by `init_db.py`)
+
+### Manual Setup
+
+Use this option only if you do not want to run the project with Docker.
 
 ### Backend Setup
 
 1. **Install dependencies**:
    ```bash
    cd backend
+   python3 -m venv .venv
+   source .venv/bin/activate
    pip install -r requirements.txt
    ```
 
@@ -225,7 +253,7 @@ CREATE TABLE tickets (
 ✅ Status tracking: Open (1), In Progress (2), Resolved (3)
 ✅ Assign tickets to users
 ✅ Dashboard with KPIs (total, open, in progress, resolved)
-✅ Charts (status breakdown, priority breakdown, 7-day activity)
+✅ Charts (status breakdown and priority breakdown)
 ✅ Search tickets by title, description, ID, assignee, reporter
 ✅ Filter by priority and status
 ✅ Sort by creation date
